@@ -1,14 +1,36 @@
 {
-  "name": "${PROJECT_NAME}",
+  "name": "fastify-docker-postgres",
   "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
+  "description": "Fastify app with Docker and PostgreSQL",
+  "main": "dist/app.js",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "nodemon --exec ts-node src/app.ts",
+    "dev:watch": "nodemon src/app.ts",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "docker:build": "docker build -t fastify-app .",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
   },
-  "dependencies": {},
+  "dependencies": {
+    "fastify": "^4.24.3",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1",
+    "@fastify/postgres": "^5.2.2",
+    "@fastify/env": "^4.2.0"
+  },
   "devDependencies": {
-    "typescript": "^5.5.3"
+    "nodemon": "^3.0.1",
+    "typescript": "^5.2.2",
+    "ts-node": "^10.9.1",
+    "@types/node": "^20.8.0",
+    "@types/pg": "^8.10.7"
   },
-  "private": true
+  "keywords": ["fastify", "docker", "postgresql", "api"],
+  "author": "",
+  "license": "MIT"
 }
