@@ -1,32 +1,20 @@
-import  {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { UserModel, CreateUserInput } from '../../../models/user';
 
-// Type definitions (keep your existing ones)
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  created_at: Date;
-  updated_at?: Date;
-}
+export default async function usersEndpoint(fastify: FastifyInstance) {
+  // Initialize the user model
+  const userModel = new UserModel(fastify);
 
-interface CreateUserBody {
-  name: string;
-  email: string;
-}
+  // Ensure the users table exists (useful during development/first run)
+  await userModel.createTableIfNotExists();
 
-export default async function usersEnpoint(fastify: FastifyInstance) {
-// Sample users routes (these should now work as before, using fastify.pg)
+  // Get all users
   fastify.get('/users', async (_request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const client = await fastify.pg.connect();
-      // Ensure the users table exists. If not, this will fail.
-      // You might want to add table creation logic (e.g., using migrations) separately.
-      const result = await client.query('SELECT id, name, email, created_at FROM users ORDER BY created_at DESC');
-      client.release();
-
+      const users = await userModel.findAll();
       return {
-        users: result.rows as User[],
-        count: result.rowCount
+        users,
+        count: users.length
       };
     } catch (error) {
       fastify.log.error(error);
@@ -37,11 +25,12 @@ export default async function usersEnpoint(fastify: FastifyInstance) {
     }
   });
 
-  fastify.post<{ Body: CreateUserBody }>('/users', async (request: FastifyRequest<{
-    Body: CreateUserBody
-  }>, reply: FastifyReply) => {
+
+
+  // Create a new user
+  fastify.post<{ Body: CreateUserInput }>('/users', async (request, reply) => {
     try {
-      const {name, email} = request.body;
+      const { name, email } = request.body;
 
       if (!name || !email) {
         return reply.status(400).send({
@@ -49,20 +38,21 @@ export default async function usersEnpoint(fastify: FastifyInstance) {
         });
       }
 
-      const client = await fastify.pg.connect();
-      const result = await client.query(
-        'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id, name, email, created_at',
-        [name, email]
-      );
-      client.release();
+      // Check if email already exists
+      // const existingUser = await userModel.findByEmail(email);
+      // if (existingUser) {
+      //   return reply.status(409).send({
+      //     error: 'Email already exists'
+      //   });
+      // }
 
-      return reply.status(201).send({
-        user: result.rows[0] as User
-      });
+      const user = await userModel.createUser({ name, email });
+      return reply.status(201).send({ user });
     } catch (error) {
       fastify.log.error(error);
 
-      if (error && typeof error === 'object' && 'code' in error && error.code === '23505') { // Check for unique constraint violation
+      // Handle unique constraint violation (as a backup check)
+      if (error && typeof error === 'object' && 'code' in error && error.code === '23505') {
         return reply.status(409).send({
           error: 'Email already exists'
         });
@@ -74,4 +64,82 @@ export default async function usersEnpoint(fastify: FastifyInstance) {
       });
     }
   });
+
+  // // Update a user
+  // fastify.put<{ Params: { id: string }, Body: { name?: string; email?: string } }>(
+  //   '/users/:id',
+  //   async (request, reply) => {
+  //     try {
+  //       const id = parseInt(request.params.id, 10);
+  //       if (isNaN(id)) {
+  //         return reply.status(400).send({ error: 'Invalid user ID format' });
+  //       }
+  //
+  //       const { name, email } = request.body;
+  //
+  //       // Check if user exists
+  //       const existingUser = await userModel.findById(id);
+  //       if (!existingUser) {
+  //         return reply.status(404).send({ error: 'User not found' });
+  //       }
+  //
+  //       // Check if at least one field is provided
+  //       if (!name && !email) {
+  //         return reply.status(400).send({
+  //           error: 'At least one field (name or email) must be provided for update'
+  //         });
+  //       }
+  //
+  //       // If email is being changed, check if it's already in use
+  //       if (email && email !== existingUser.email) {
+  //         const userWithEmail = await userModel.findByEmail(email);
+  //         if (userWithEmail) {
+  //           return reply.status(409).send({
+  //             error: 'Email already exists'
+  //           });
+  //         }
+  //       }
+  //
+  //       const updatedUser = await userModel.update(id, { name, email });
+  //       return { user: updatedUser };
+  //     } catch (error) {
+  //       fastify.log.error(error);
+  //
+  //       // Handle unique constraint violation (as a backup check)
+  //       if (error && typeof error === 'object' && 'code' in error && error.code === '23505') {
+  //         return reply.status(409).send({
+  //           error: 'Email already exists'
+  //         });
+  //       }
+  //
+  //       return reply.status(500).send({
+  //         error: 'Failed to update user',
+  //         message: error instanceof Error ? error.message : 'Unknown error'
+  //       });
+  //     }
+  //   }
+  // );
+  //
+  // // Delete a user
+  // fastify.delete<{ Params: { id: string } }>('/users/:id', async (request, reply) => {
+  //   try {
+  //     const id = parseInt(request.params.id, 10);
+  //     if (isNaN(id)) {
+  //       return reply.status(400).send({ error: 'Invalid user ID format' });
+  //     }
+  //
+  //     const deleted = await userModel.delete(id);
+  //     if (!deleted) {
+  //       return reply.status(404).send({ error: 'User not found' });
+  //     }
+  //
+  //     return reply.status(204).send();
+  //   } catch (error) {
+  //     fastify.log.error(error);
+  //     return reply.status(500).send({
+  //       error: 'Failed to delete user',
+  //       message: error instanceof Error ? error.message : 'Unknown error'
+  //     });
+  //   }
+  // });
 }
