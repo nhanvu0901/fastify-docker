@@ -66,8 +66,6 @@ const start = async (): Promise<void> => {
     await server.listen({port: Number(process.env.PORT) || 3000, host: '0.0.0.0'});
     console.log(`Server is running on port ${process.env.PORT}`);
     console.log(`Swagger documentation: http://localhost:${process.env.PORT}/documentation`);
-    console.log(`Neo4j browser: http://localhost:7474/browser/`);
-    console.log(`Qdrant dashboard: http://localhost:6333/dashboard/`);
 
     const shutdown = async () => {
       console.log('Shutting down server...');

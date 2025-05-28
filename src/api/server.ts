@@ -8,9 +8,6 @@ export async function createServer(): Promise<FastifyInstance> {
   const server = Fastify({
     logger: {
       level:'info',
-      transport: {
-        target: 'pino-pretty',
-      },
     },
   });
 

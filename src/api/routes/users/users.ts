@@ -1,4 +1,4 @@
-import Fastify, {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
+import  {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
 
 // Type definitions (keep your existing ones)
 interface User {

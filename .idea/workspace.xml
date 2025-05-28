@@ -5,14 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="167bdefe-d740-4066-804d-94e0c3723261" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/api/routes/index.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/api/routes/users/index.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/api/routes/users/users.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/api/server.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/models/user.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/routes/users/users.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/routes/users/users.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/server.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -44,7 +42,7 @@
   "keyToString": {
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "day__2",
     "last_opened_file_path": "D:/Learn code/Fastify-docker",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -81,7 +79,7 @@
       <workItem from="1748334529487" duration="3383000" />
       <workItem from="1748338700941" duration="39000" />
       <workItem from="1748405178377" duration="94000" />
-      <workItem from="1748405274853" duration="10790000" />
+      <workItem from="1748405274853" duration="13961000" />
     </task>
     <servers />
   </component>
