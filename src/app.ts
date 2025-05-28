@@ -1,41 +1,18 @@
-import Fastify, { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import fastifyPostgres from '@fastify/postgres';
+import Fastify, {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
 import fastifyEnv from '@fastify/env';
+import databasePlugin from './plugins/database'; // Import the new database plugin
+import {createServer} from './api/server';
 
-// Type definitions
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  created_at: Date;
-  updated_at?: Date;
-}
 
-interface CreateUserBody {
-  name: string;
-  email: string;
-}
 
-interface EnvSchema {
-  PORT: string;
-  NODE_ENV: string;
-  DATABASE_URL: string;
-}
+const fastify: FastifyInstance = Fastify({logger: true});
 
-// Extend Fastify instance with custom properties
-declare module 'fastify' {
-  interface FastifyInstance {
-    config: EnvSchema;
-  }
-}
-
-const fastify: FastifyInstance = Fastify({ logger: true });
-
-// Register environment variables
+// Register environment variables (remains important)
+// The 'await' here is important for fastify.config to be available when databasePlugin is registered
 fastify.register(fastifyEnv, {
   schema: {
     type: 'object',
-    required: ['DATABASE_URL'],
+    required: ['DATABASE_URL', 'PORT'], // DATABASE_URL is still required here for validation
     properties: {
       PORT: {
         type: 'string',
@@ -45,107 +22,60 @@ fastify.register(fastifyEnv, {
         type: 'string',
         default: 'development'
       },
-      DATABASE_URL: {
+      DATABASE_URL: { // @fastify/env will load this into process.env and fastify.config
         type: 'string'
       }
     }
   },
-  dotenv: true
+  dotenv: true // This loads .env file into process.env
 });
 
-// Register PostgreSQL plugin
-fastify.register(fastifyPostgres, {
-  connectionString: process.env.DATABASE_URL || 'postgres://nhan:password@localhost:5432/fastify_db'
-});
 
-// Health check route
+// Register the new database plugin
+// The plugin will use fastify.config.DATABASE_URL or process.env.DATABASE_URL
+fastify.register(databasePlugin);
+
+// Health check route - now uses the plugin's utility
 fastify.get('/health', async (_request: FastifyRequest, reply: FastifyReply) => {
   try {
-    // Test database connection
-    const client = await fastify.pg.connect();
-    const result = await client.query('SELECT NOW()');
-    client.release();
-
+    const dbHealth = await fastify.checkDbConnection(); // Use the decorated method added in the database.ts
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      database: 'connected',
-      dbTime: result.rows[0].now
+      database: {
+        status: dbHealth.status,
+        dbTime: dbHealth.dbTime
+      }
     };
   } catch (error) {
-    fastify.log.error(error);
+    fastify.log.error('Health check failed:', error);
+    // The error from checkDbConnection is already logged, so we just send the response
     return reply.status(500).send({
       status: 'error',
-      message: 'Database connection failed',
+      message: 'Health check failed, potentially database issue.',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
 
-// Sample users routes
-fastify.get('/users', async (_request: FastifyRequest, reply: FastifyReply) => {
-  try {
-    const client = await fastify.pg.connect();
-    const result = await client.query('SELECT id, name, email, created_at FROM users ORDER BY created_at DESC');
-    client.release();
-
-    return {
-      users: result.rows as User[],
-      count: result.rowCount
-    };
-  } catch (error) {
-    fastify.log.error(error);
-    return reply.status(500).send({
-      error: 'Failed to fetch users',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-});
-
-fastify.post<{ Body: CreateUserBody }>('/users', async (request: FastifyRequest<{ Body: CreateUserBody }>, reply: FastifyReply) => {
-  try {
-    const { name, email } = request.body;
-
-    if (!name || !email) {
-      return reply.status(400).send({
-        error: 'Name and email are required'
-      });
-    }
-
-    const client = await fastify.pg.connect();
-    const result = await client.query(
-      'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id, name, email, created_at',
-      [name, email]
-    );
-    client.release();
-
-    return reply.status(201).send({
-      user: result.rows[0] as User
-    });
-  } catch (error) {
-    fastify.log.error(error);
-
-    if (error && typeof error === 'object' && 'code' in error && error.code === '23505') {
-      return reply.status(409).send({
-        error: 'Email already exists'
-      });
-    }
-
-    return reply.status(500).send({
-      error: 'Failed to create user',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-});
 
 // Start server
 const start = async (): Promise<void> => {
   try {
-    const port = parseInt(process.env.PORT || '3000');
-    const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+    const server = await createServer();
+    await server.listen({port: Number(process.env.PORT) || 3000, host: '0.0.0.0'});
+    console.log(`Server is running on port ${process.env.PORT}`);
+    console.log(`Swagger documentation: http://localhost:${process.env.PORT}/documentation`);
+    console.log(`Neo4j browser: http://localhost:7474/browser/`);
+    console.log(`Qdrant dashboard: http://localhost:6333/dashboard/`);
 
-    await fastify.listen({ port, host });
-    fastify.log.info(`Server running on http://${host}:${port}`);
+    const shutdown = async () => {
+      console.log('Shutting down server...');
+      await server.close();
+      process.exit(0);
+    };
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

@@ -1,51 +1,44 @@
-# Use Node.js LTS version
 FROM node:18-alpine AS builder
-
-# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package.json and package-lock.json (if available)
+# Using package*.json copies both if they exist
 COPY package*.json ./
+
+# Copy tsconfig.json for the build process
 COPY tsconfig.json ./
 
-# Install all dependencies (including dev dependencies for building)
+# Install all dependencies (including devDependencies)
+# npm ci is generally preferred in CI/build environments as it uses the lock file
+# and provides faster, more reliable builds.
 RUN npm ci
 
-# Copy source code
-COPY src/ ./src/
+# Copy the rest of the application source code
+COPY ./src ./src
 
-# Build TypeScript
+# Build the TypeScript code
 RUN npm run build
 
-# Production stage
+# ---- Production Stage ----
+# This stage creates the final image with only production dependencies and built code
 FROM node:18-alpine AS production
-
-# Set working directory
+ENV NODE_ENV=production
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package.json and package-lock.json for installing production dependencies
+COPY package.json ./
+COPY package-lock.json ./
 
-# Install only production dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install only production dependencies using the lock file
+# --omit=dev is the modern equivalent of --only=production for npm ci
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy built application from builder stage
+# Copy the built application from the builder stage
 COPY --from=builder /app/dist ./dist
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
-
-# Change ownership of the app directory
-RUN chown -R nodejs:nodejs /app
-USER nodejs
-
-# Expose port
+# Expose the port the app runs on (as defined in your app and docker-compose)
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
-
-# Start the application
-CMD ["npm", "start"]
+# Define the command to run the app
+# This should match the "main" script in your package.json or your specific start command
+CMD [ "node", "dist/app.js" ]
