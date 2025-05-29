@@ -42,7 +42,7 @@ export default async function usersEndpoint(fastify: FastifyInstance) {
         })
       }
       return reply.status(200).send({
-        user: existUser
+        existUser
       })
     } catch (error) {
       fastify.log.error('Error in the signin controller', error);

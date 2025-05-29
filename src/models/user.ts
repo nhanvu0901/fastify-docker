@@ -57,15 +57,14 @@ export class UserModel {
       if (result.records.length === 0) {
         return null;
       }
-      const hashedPassword = await bcrypt.hash(password, 10);
+
 
       const node = result.records[0].get('user');
       const userData: User = node.properties
-      const isValid = userData.password === hashedPassword
+      const isValid = await bcrypt.compare(password,userData.password as string);
       if(!isValid){
         return null
       }
-      console.log(node, password);
       return this.recordToUser(result.records[0]);
     } catch (error) {
       this.fastify.log.error('Error in verifyUser', error);
