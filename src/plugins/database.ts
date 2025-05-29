@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import fastifyPlugin from 'fastify-plugin';
 import fastifyPostgres from '@fastify/postgres';
-import { QueryResult, QueryConfig, PoolClient } from 'pg';
+import { QueryResult, PoolClient } from 'pg';
 
 async function databasePlugin(fastify: FastifyInstance) {
   const dbConnectionString = process.env.DATABASE_URL;

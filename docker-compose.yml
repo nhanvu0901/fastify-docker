@@ -31,7 +31,9 @@ services:
       PORT: 3000
       DATABASE_URL: postgres://nhan:password@postgres:5432/fastify_db
     ports:
-      - "3000:3000"
+      - "3000:3000"  # Web API port
+      - "9229:9229"  # Node.js debugging port
+    env_file: .env
     depends_on:
       postgres:
         condition: service_healthy

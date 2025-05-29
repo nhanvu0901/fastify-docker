@@ -11,6 +11,8 @@
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",
+    "dev:debug": "nodemon --exec node --inspect=0.0.0.0:9229 -r ts-node/register src/app.ts",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up --build",
     "docker:build": "docker build -t fastify-app .",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",

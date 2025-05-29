@@ -3,7 +3,7 @@ import cors from '@fastify/cors';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
 import routes from './routes';
-
+import databasePlugin from '../plugins/database'
 export async function createServer(): Promise<FastifyInstance> {
   const server = Fastify({
     logger: {
@@ -14,6 +14,10 @@ export async function createServer(): Promise<FastifyInstance> {
   await server.register(cors, {
     origin: true,
   })
+  // Register the new database plugin
+// The plugin will use process.env.DATABASE_URL , register here so the controller can use the database plugin
+  await server.register(databasePlugin);
+
 
   await server.register(swagger, {
     swagger: {
