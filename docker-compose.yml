@@ -1,53 +1,67 @@
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: fastify_postgres
+  # Neo4j Database
+  neo4j:
+    image: neo4j:5.15.0
+    container_name: fastify_neo4j_dev
     restart: unless-stopped
     environment:
-      POSTGRES_DB: fastify_db
-      POSTGRES_USER: nhan
-      POSTGRES_PASSWORD: password
+      NEO4J_AUTH: neo4j/password
+      NEO4J_ACCEPT_LICENSE_AGREEMENT: yes
     ports:
-      - "5432:5432"
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-
+      - neo4j_data_dev:/data
+      - neo4j_logs_dev:/logs
+      - neo4j_import_dev:/var/lib/neo4j/import
+      - neo4j_plugins_dev:/plugins
     networks:
-      - fastify_network
+      - fastify_network_dev
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nhan -d fastify_db"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7474"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Fastify Application
+  # Fastify Application in Development Mode
   app:
-    build: .
-    container_name: fastify_app
+    build:
+      context: .
+      target: development
+    container_name: fastify_app_dev
     restart: unless-stopped
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 3000
-      DATABASE_URL: postgres://nhan:password@postgres:5432/fastify_db
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USERNAME: neo4j
+      NEO4J_PASSWORD: password
+      NEO4J_DATABASE: neo4j
     ports:
       - "3000:3000"  # Web API port
       - "9229:9229"  # Node.js debugging port
     env_file: .env
     depends_on:
-      postgres:
+      neo4j:
         condition: service_healthy
     networks:
-      - fastify_network
+      - fastify_network_dev
     volumes:
-      - ./src:/app/src:ro  # For development - remove in production
-      - ./tsconfig.json:/app/tsconfig.json:ro  # TypeScript config
-
+      - ./src:/app/src  # For live reloading
+      - ./nodemon.json:/app/nodemon.json
+      - ./tsconfig.json:/app/tsconfig.json
+    command: npm run dev:debug
 
 volumes:
-  postgres_data:
+  neo4j_data_dev:
+    driver: local
+  neo4j_logs_dev:
+    driver: local
+  neo4j_import_dev:
+    driver: local
+  neo4j_plugins_dev:
     driver: local
 
 networks:
-  fastify_network:
+  fastify_network_dev:
     driver: bridge

@@ -1,12 +1,12 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { UserModel, CreateUserInput } from '../../../models/user';
+import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
+import {UserModel, CreateUserInput, loginUserInput} from '../../../models/user';
 
 export default async function usersEndpoint(fastify: FastifyInstance) {
   // Initialize the user model
   const userModel = new UserModel(fastify);
 
-  // Ensure the users table exists (useful during development/first run)
-  await userModel.createTableIfNotExists();
+  // Ensure constraints (equivalent to creating tables in SQL)
+  await userModel.createConstraints();
 
   // Get all users
   fastify.get('/users', async (_request: FastifyRequest, reply: FastifyReply) => {
@@ -26,19 +26,42 @@ export default async function usersEndpoint(fastify: FastifyInstance) {
   });
 
 
+  //signin
+  fastify.post<{ Body: loginUserInput }>('/signin', async (request, reply) => {
+    try {
+      const {email, password} = request.body;
+      if(!email || !password) {
+        return reply.status(400).send({
+          error: 'Missing email or password',
+        })
+      }
+      let existUser = await userModel.verifyUser(email,password);
+      if (!existUser) {
+        return reply.status(400).send({
+          error: 'User not found',
+        })
+      }
+      return reply.status(200).send({
+        user: existUser
+      })
+    } catch (error) {
+      fastify.log.error('Error in the signin controller', error);
+    }
+  })
+
 
   // Create a new user
   fastify.post<{ Body: CreateUserInput }>('/users', async (request, reply) => {
     try {
-      const { name, email } = request.body;
+      const {name, email, password} = request.body;
 
-      if (!name || !email) {
+      if (!name || !email || !password) {
         return reply.status(400).send({
-          error: 'Name and email are required'
+          error: 'Name ,email and password are required'
         });
       }
 
-      // Check if email already exists
+      // // Check if email already exists
       // const existingUser = await userModel.findByEmail(email);
       // if (existingUser) {
       //   return reply.status(409).send({
@@ -46,13 +69,13 @@ export default async function usersEndpoint(fastify: FastifyInstance) {
       //   });
       // }
 
-      const user = await userModel.createUser({ name, email });
-      return reply.status(201).send({ user });
+      const user = await userModel.createUser({name, email, password});
+      return reply.status(201).send({user});
     } catch (error) {
       fastify.log.error(error);
 
-      // Handle unique constraint violation (as a backup check)
-      if (error && typeof error === 'object' && 'code' in error && error.code === '23505') {
+      // Neo4j specific error handling
+      if (error instanceof Error && error.message && error.message.includes('already exists')) {
         return reply.status(409).send({
           error: 'Email already exists'
         });
