@@ -58,11 +58,10 @@ export class UserModel {
         return null;
       }
 
-
       const node = result.records[0].get('user');
       const userData: User = node.properties
-      const isValid = await bcrypt.compare(password,userData.password as string);
-      if(!isValid){
+      const isValid = await bcrypt.compare(password, userData.password as string);
+      if (!isValid) {
         return null
       }
       return this.recordToUser(result.records[0]);
@@ -153,14 +152,13 @@ export class UserModel {
     }
   }
 
+
   async update(id: string, userData: UpdateUserInput): Promise<User> {
     try {
       const params: Record<string, any> = {
         id: parseInt(id, 10),
         updatedAt: new Date().toISOString()
-      };
-
-      // Build dynamic SET clause
+      }
       let setClauses = ['user.updatedAt = $updatedAt'];
       if (userData.name) {
         params.name = userData.name;
@@ -176,29 +174,73 @@ export class UserModel {
         params.password = await bcrypt.hash(userData.password, saltRounds);
         setClauses.push('user.password = $password');
       }
-
       const setClause = setClauses.join(', ');
 
       const result = await this.fastify.queryDatabase(
-        `
-        MATCH (user:User)
-        WHERE ID(user) = $id
-        SET ${setClause}
-        RETURN user
-        `,
-        params
-      );
-
+        `MATCH (user:User) 
+         WHERE ID(user) = $id
+         SET ${setClause}
+         RETURN user
+        `, {params}
+      )
       if (result.records.length === 0) {
         throw new Error('User not found');
       }
 
       return this.recordToUser(result.records[0]);
-    } catch (err) {
-      this.fastify.log.error('Error in UserModel.update:', err);
-      throw err;
+    } catch (error) {
+      this.fastify.log.error('Error in update:', error);
+      throw error;
     }
   }
+
+
+  // async update(id: string, userData: UpdateUserInput): Promise<User> {
+  //   try {
+  //     const params: Record<string, any> = {
+  //       id: parseInt(id, 10),
+  //       updatedAt: new Date().toISOString()
+  //     };
+  //
+  //     // Build dynamic SET clause
+  //     let setClauses = ['user.updatedAt = $updatedAt'];
+  //     if (userData.name) {
+  //       params.name = userData.name;
+  //       setClauses.push('user.name = $name');
+  //     }
+  //     if (userData.email) {
+  //       params.email = userData.email;
+  //       setClauses.push('user.email = $email');
+  //     }
+  //     if (userData.password) {
+  //       // Hash the password
+  //       const saltRounds = 10;
+  //       params.password = await bcrypt.hash(userData.password, saltRounds);
+  //       setClauses.push('user.password = $password');
+  //     }
+  //
+  //     const setClause = setClauses.join(', ');
+  //
+  //     const result = await this.fastify.queryDatabase(
+  //       `
+  //       MATCH (user:User)
+  //       WHERE ID(user) = $id
+  //       SET ${setClause}
+  //       RETURN user
+  //       `,
+  //       params
+  //     );
+  //
+  //     if (result.records.length === 0) {
+  //       throw new Error('User not found');
+  //     }
+  //
+  //     return this.recordToUser(result.records[0]);
+  //   } catch (err) {
+  //     this.fastify.log.error('Error in UserModel.update:', err);
+  //     throw err;
+  //   }
+  // }
 
   async delete(id: string): Promise<boolean> {
     try {
@@ -216,9 +258,7 @@ export class UserModel {
 
   async createConstraints(): Promise<void> {
     try {
-      // Create unique constraint for email
       await this.fastify.queryDatabase('CREATE CONSTRAINT user_email_unique IF NOT EXISTS FOR (user:User) REQUIRE user.email IS UNIQUE');
-
       this.fastify.log.info('User constraints created or already exist');
     } catch (error) {
       this.fastify.log.error('Error creating user constraints:', error);

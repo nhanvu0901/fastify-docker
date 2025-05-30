@@ -30,12 +30,12 @@ export default async function usersEndpoint(fastify: FastifyInstance) {
   fastify.post<{ Body: loginUserInput }>('/signin', async (request, reply) => {
     try {
       const {email, password} = request.body;
-      if(!email || !password) {
+      if (!email || !password) {
         return reply.status(400).send({
           error: 'Missing email or password',
         })
       }
-      let existUser = await userModel.verifyUser(email,password);
+      let existUser = await userModel.verifyUser(email, password);
       if (!existUser) {
         return reply.status(400).send({
           error: 'User not found',
@@ -51,7 +51,7 @@ export default async function usersEndpoint(fastify: FastifyInstance) {
 
 
   // Create a new user
-  fastify.post<{ Body: CreateUserInput }>('/users', async (request, reply) => {
+  fastify.post<{ Body: CreateUserInput }>('/signup', async (request, reply) => {
     try {
       const {name, email, password} = request.body;
 
@@ -61,13 +61,12 @@ export default async function usersEndpoint(fastify: FastifyInstance) {
         });
       }
 
-      // // Check if email already exists
-      // const existingUser = await userModel.findByEmail(email);
-      // if (existingUser) {
-      //   return reply.status(409).send({
-      //     error: 'Email already exists'
-      //   });
-      // }
+      const existingUser = await userModel.findByEmail(email);
+      if (existingUser) {
+        return reply.status(409).send({
+          error: 'Email already exists'
+        });
+      }
 
       const user = await userModel.createUser({name, email, password});
       return reply.status(201).send({user});
@@ -87,6 +86,41 @@ export default async function usersEndpoint(fastify: FastifyInstance) {
       });
     }
   });
+
+  fastify.put<{ Params: { id: string }, Body: { name: string; email: string } }>(
+    '/user/:id',
+    async (request, reply) => {
+      try {
+        const id = parseInt(request.params.id, 0);
+        if (isNaN(id)) {
+          return reply.status(400).send({error: 'Invalid id'});
+        }
+        const {name, email} = request.body;
+        if (!name || !email) {
+          return reply.status(400).send({error: 'Invalid email or password'});
+        }
+        const isExist = await userModel.findByEmail(email);
+        if (!isExist) {
+          return reply.status(400).send({error: 'Not exist user'});
+        }
+        const updatedUser = await userModel.update(isExist.id, {name, email});
+        return {user: updatedUser};
+      } catch (error) {
+        fastify.log.error(error);
+
+        if (error && typeof error === 'object' && 'code' in error && error.code === '23505') {
+          return reply.status(409).send({
+            error: 'Email already exists'
+          });
+        }
+        return reply.status(500).send({
+          error: 'Failed to update user',
+          message: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+  )
+
 
   // // Update a user
   // fastify.put<{ Params: { id: string }, Body: { name?: string; email?: string } }>(
