@@ -1,15 +1,8 @@
 import {FastifyInstance} from "fastify";
 import {Record as Neo4jRecord} from "neo4j-driver";
 import {Movie} from "../types";
-interface QueryParams {
-    query: string;
-    limit: number;
-    genres?: string[] | undefined;
-    yearFrom?: string | undefined;
-    yearTo?: string | undefined;
-    language?: string | undefined;
-    minRating?: number | undefined;
-}
+
+
 export class MovieModel {
     private fastify: FastifyInstance;
 
@@ -49,40 +42,62 @@ export class MovieModel {
     }): Promise<Movie[]> {
         try {
             const {genres, yearFrom, yearTo, minRating, language, limit = 20} = filters || {};
+
+            // Ensure limit is definitely an integer - this is critical for Neo4j
+            const safeLimit = Math.floor(Math.abs(Number(limit)));
+
             let conditions: string[] = [
                 'movie.title CONTAINS $query OR movie.description CONTAINS $query'
-            ]
-            let params:QueryParams = {query, limit}
+            ];
+
+            // Create params object with explicit integer for limit
+            let params: any = {
+                query,
+                limit: safeLimit  // Guaranteed to be a positive integer
+            };
+
             if (genres && genres.length > 0) {
-                conditions.push(` AND ANY(genre_data in $genres WHERE genre.name CONTAINS genre_data)`);
+                conditions.push('ANY(genre_data in $genres WHERE genre.name CONTAINS genre_data)');
                 params.genres = genres;
             }
+
             if (yearFrom) {
-                conditions.push(` AND movie.releaseDate >= date($yearFrom)`);
+                conditions.push('movie.releaseDate >= date($yearFrom)');
                 params.yearFrom = `${yearFrom}-01-01`;
             }
 
             if (yearTo) {
-                conditions.push(` AND movie.releaseDate <= date($yearTo)`);
+                conditions.push('movie.releaseDate <= date($yearTo)');
                 params.yearTo = `${yearTo}-12-31`;
             }
 
             if (language) {
-                conditions.push(` AND movie.language = $language`);
+                conditions.push('movie.language = $language');
                 params.language = language;
             }
-            const whereClause = conditions.join(' ');
-            const result = await this.fastify.queryDatabase(`
-    MATCH (movie:Movie)
-    ${genres && genres.length > 0 ? ` MATCH(movie)-[:BELONGS_TO]->(genre:Genre)` : ''}
-    WHERE ${whereClause}
-    OPTIONAL MATCH (movie)<-[r:RATED]-()
-    WITH movie, AVG(r.score) as avgRating, COUNT(r) as ratingsCount
-    ${filters?.minRating ? 'WHERE avgRating >= $minRating' : ''}
-    RETURN movie, avgRating, ratingsCount
-    ORDER BY avgRating DESC, ratingsCount DESC
-    LIMIT $limit
-  `, {...params, ...(minRating && {minRating: minRating})});//...{attrribute in params}, ... (true && {minRating})
+
+            // Build the WHERE clause properly
+            const whereClause = conditions.join(' AND ');
+
+            // Build the query with proper conditional MATCH for genres
+            let cypher = `
+            MATCH (movie:Movie)
+            ${genres && genres.length > 0 ? 'MATCH (movie)-[:BELONGS_TO]->(genre:Genre)' : ''}
+            WHERE ${whereClause}
+            OPTIONAL MATCH (movie)<-[r:RATED]-()
+            WITH movie, AVG(r.score) as avgRating, COUNT(r) as ratingsCount
+            ${minRating ? 'WHERE avgRating >= $minRating' : ''}
+            RETURN movie, avgRating, ratingsCount
+            ORDER BY avgRating DESC, ratingsCount DESC
+            LIMIT $limit
+        `;
+
+            // Add minRating to params if provided
+            if (minRating) {
+                params.minRating = minRating;
+            }
+
+            const result = await this.fastify.queryDatabase(cypher, params);
             return result.records.map(record => this.recordToMovie(record));
         } catch (err) {
             this.fastify.log.error('Error searching movies:', err);

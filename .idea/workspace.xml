@@ -5,16 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="167bdefe-d740-4066-804d-94e0c3723261" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/api/routes/movies/index.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/api/routes/movies/movie.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/types/index.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/api/routes/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/routes/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/api/routes/users/users.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/routes/users/users.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/routes/movies/movie.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/routes/movies/movie.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/models/movie.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/models/movie.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/models/user.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/models/user.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -107,7 +100,7 @@
       <workItem from="1748778504266" duration="10720000" />
       <workItem from="1748834182347" duration="1933000" />
       <workItem from="1748837205814" duration="1810000" />
-      <workItem from="1748861057107" duration="5384000" />
+      <workItem from="1748861057107" duration="7095000" />
     </task>
     <servers />
   </component>
@@ -184,27 +177,15 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/api/routes/movies/movie.ts</url>
-          <line>32</line>
+          <line>44</line>
           <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="50" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/models/movie.ts</url>
-          <line>74</line>
-          <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="52" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/api/routes/movies/movie.ts</url>
-          <line>34</line>
+          <line>46</line>
           <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="53" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/models/movie.ts</url>
-          <line>85</line>
-          <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="54" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/plugins/database.ts</url>
@@ -219,12 +200,6 @@
           <option name="timeStamp" value="58" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/models/movie.ts</url>
-          <line>87</line>
-          <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="59" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/plugins/database.ts</url>
           <line>53</line>
           <properties lambdaOrdinal="-1" />
@@ -235,6 +210,12 @@
           <line>54</line>
           <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="61" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/src/api/routes/movies/movie.ts</url>
+          <line>18</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="62" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
