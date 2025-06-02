@@ -50,6 +50,7 @@ services:
       - ./src:/app/src  # For live reloading
       - ./nodemon.json:/app/nodemon.json
       - ./tsconfig.json:/app/tsconfig.json
+      - ./top_movie.json:/app/top_movie.json
     command: npm run dev:debug
 
 volumes:

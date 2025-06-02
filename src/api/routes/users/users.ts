@@ -1,5 +1,6 @@
 import {FastifyInstance, FastifyRequest, FastifyReply} from 'fastify';
-import {UserModel, CreateUserInput, loginUserInput} from '../../../models/user';
+import {UserModel} from '../../../models/user';
+import {CreateUserInput, loginUserInput} from "../../../types";
 
 export default async function usersEndpoint(fastify: FastifyInstance) {
   // Initialize the user model

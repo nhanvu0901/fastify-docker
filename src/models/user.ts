@@ -1,32 +1,8 @@
 import {FastifyInstance} from 'fastify';
 import {Record as Neo4jRecord} from 'neo4j-driver';
 import bcrypt from 'bcrypt';
+import { User, CreateUserInput, UpdateUserInput} from "../types";
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  password?: string; // Not returned to client
-  createdAt: Date;
-  updatedAt?: Date;
-}
-
-export interface loginUserInput {
-  email: string;
-  password: string;
-}
-
-export interface CreateUserInput {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export interface UpdateUserInput {
-  name?: string;
-  email?: string;
-  password?: string;
-}
 
 export class UserModel {
   private fastify: FastifyInstance;

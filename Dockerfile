@@ -7,10 +7,6 @@ COPY package*.json ./
 # Copy tsconfig.json for the build process
 COPY tsconfig.json ./
 
-# Copy top_movie.json
-COPY top_movie*.json ./
-
-
 # Install all dependencies (including devDependencies)
 RUN npm ci
 
