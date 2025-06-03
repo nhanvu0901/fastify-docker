@@ -49,12 +49,34 @@ export class MovieSeederService implements OnModuleInit {
     ) {}
 
     async onModuleInit() {
-        // Auto-seed if no movies exist
-        setTimeout(() => this.autoSeed(), 2000); // Delay to ensure all services are ready
+        // Auto-seed with delay and retry logic
+        setTimeout(() => this.autoSeedWithRetry(), 5000); // Increased delay
     }
 
-    private async autoSeed() {
+    private async autoSeedWithRetry(maxRetries = 3, currentAttempt = 1) {
         try {
+            // Wait for database to be ready
+            if (!this.databaseService.isReady()) {
+                if (currentAttempt <= maxRetries) {
+                    this.logger.log(`Database not ready, retrying in 3 seconds... (${currentAttempt}/${maxRetries})`);
+                    setTimeout(() => this.autoSeedWithRetry(maxRetries, currentAttempt + 1), 3000);
+                    return;
+                } else {
+                    this.logger.error('Database not ready after max retries, skipping auto-seeding');
+                    return;
+                }
+            }
+
+            // Check if movies collection exists
+            const collectionExists = await this.databaseService.collectionExists(COLLECTIONS.MOVIES);
+            if (!collectionExists) {
+                this.logger.log('Movies collection does not exist, waiting for it to be created...');
+                // Wait a bit more for the MoviesService to create the collection
+                setTimeout(() => this.autoSeedWithRetry(maxRetries, currentAttempt), 2000);
+                return;
+            }
+
+            // Check if movies already exist
             const movieCount = await this.databaseService.getClient().count(COLLECTIONS.MOVIES);
             if (movieCount.count === 0) {
                 this.logger.log('No movies found, starting automatic seeding...');
@@ -63,12 +85,21 @@ export class MovieSeederService implements OnModuleInit {
                 this.logger.log(`Movies already exist in database (${movieCount.count}), skipping seeding`);
             }
         } catch (error) {
-            this.logger.error('Auto-seeding failed:', error);
+            if (currentAttempt <= maxRetries) {
+                this.logger.warn(`Auto-seeding attempt ${currentAttempt} failed, retrying...`, error.message);
+                setTimeout(() => this.autoSeedWithRetry(maxRetries, currentAttempt + 1), 3000);
+            } else {
+                this.logger.error('Auto-seeding failed after max retries:', error);
+            }
         }
     }
 
     async seedFromJSON(jsonFilePath: string = 'top_movie.json'): Promise<void> {
         try {
+            if (!this.databaseService.isReady()) {
+                throw new Error('Database is not ready');
+            }
+
             this.logger.log('Starting movie database seeding from JSON...');
 
             const fullPath = path.resolve(jsonFilePath);
@@ -218,6 +249,10 @@ export class MovieSeederService implements OnModuleInit {
 
     async clearMovieData(): Promise<void> {
         try {
+            if (!this.databaseService.isReady()) {
+                throw new Error('Database is not ready');
+            }
+
             this.logger.log('Clearing all movie data...');
 
             // Delete the entire collection
@@ -235,6 +270,10 @@ export class MovieSeederService implements OnModuleInit {
 
     async getSeededStatistics(): Promise<any> {
         try {
+            if (!this.databaseService.isReady()) {
+                return { error: 'Database not ready' };
+            }
+
             const movieCount = await this.databaseService.getClient().count(COLLECTIONS.MOVIES);
 
             if (movieCount.count === 0) {
@@ -298,6 +337,10 @@ export class MovieSeederService implements OnModuleInit {
     // Utility method to re-seed with new embeddings
     async regenerateEmbeddings(): Promise<void> {
         try {
+            if (!this.databaseService.isReady()) {
+                throw new Error('Database is not ready');
+            }
+
             this.logger.log('Regenerating embeddings for all movies...');
 
             const allMovies = await this.databaseService.getClient().scroll(COLLECTIONS.MOVIES, {

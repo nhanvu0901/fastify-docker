@@ -15,7 +15,32 @@ export class MoviesService implements OnModuleInit {
     ) {}
 
     async onModuleInit() {
-        await this.initializeCollection();
+        // Initialize with retry logic
+        setTimeout(() => this.initializeCollectionWithRetry(), 1000);
+    }
+
+    private async initializeCollectionWithRetry(maxRetries = 5, currentAttempt = 1) {
+        try {
+            if (!this.databaseService.isReady()) {
+                if (currentAttempt <= maxRetries) {
+                    this.logger.log(`Database not ready, retrying collection initialization... (${currentAttempt}/${maxRetries})`);
+                    setTimeout(() => this.initializeCollectionWithRetry(maxRetries, currentAttempt + 1), 2000);
+                    return;
+                } else {
+                    this.logger.error('Database not ready after max retries, skipping collection initialization');
+                    return;
+                }
+            }
+
+            await this.initializeCollection();
+        } catch (error) {
+            if (currentAttempt <= maxRetries) {
+                this.logger.warn(`Collection initialization attempt ${currentAttempt} failed, retrying...`, error.message);
+                setTimeout(() => this.initializeCollectionWithRetry(maxRetries, currentAttempt + 1), 2000);
+            } else {
+                this.logger.error('Failed to initialize movies collection after max retries:', error);
+            }
+        }
     }
 
     private async initializeCollection() {
@@ -37,11 +62,16 @@ export class MoviesService implements OnModuleInit {
             this.logger.log('Movies collection initialized successfully');
         } catch (error) {
             this.logger.error('Failed to initialize movies collection:', error);
+            throw error;
         }
     }
 
     async searchMovies(searchDto: MovieSearchDto): Promise<{ movies: Movie[] }> {
         try {
+            if (!this.databaseService.isReady()) {
+                throw new Error('Database is not ready');
+            }
+
             let searchVector: number[] | null = null;
 
             // If there's a text query, generate embedding for semantic search
@@ -84,6 +114,10 @@ export class MoviesService implements OnModuleInit {
 
     async findAll(searchDto: MovieSearchDto): Promise<{ movies: Movie[]; total: number }> {
         try {
+            if (!this.databaseService.isReady()) {
+                throw new Error('Database is not ready');
+            }
+
             const filter = this.buildFilter(searchDto);
 
             const response = await this.databaseService.getClient().scroll(COLLECTIONS.MOVIES, {
@@ -112,6 +146,10 @@ export class MoviesService implements OnModuleInit {
 
     async getAllGenres(): Promise<string[]> {
         try {
+            if (!this.databaseService.isReady()) {
+                throw new Error('Database is not ready');
+            }
+
             // Get all unique genres from movie collection
             const response = await this.databaseService.getClient().scroll(COLLECTIONS.MOVIES, {
                 limit: 10000, // Get all movies to extract genres
@@ -136,6 +174,10 @@ export class MoviesService implements OnModuleInit {
 
     async getStatistics() {
         try {
+            if (!this.databaseService.isReady()) {
+                throw new Error('Database is not ready');
+            }
+
             const totalMovies = await this.databaseService.getClient().count(COLLECTIONS.MOVIES);
 
             // Get some sample data for statistics

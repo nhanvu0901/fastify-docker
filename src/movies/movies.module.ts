@@ -6,6 +6,6 @@ import { EmbeddingService } from './embedding.service';
 @Module({
     controllers: [MoviesController],
     providers: [MoviesService, EmbeddingService],
-    exports: [MoviesService],
+    exports: [MoviesService, EmbeddingService], // Export EmbeddingService so other modules can use it
 })
 export class MoviesModule {}

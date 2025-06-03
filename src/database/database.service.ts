@@ -13,11 +13,16 @@ export interface QdrantConfig {
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(DatabaseService.name);
     private client: QdrantClient;
+    private isInitialized = false;
 
     constructor(private configService: ConfigService) {
     }
 
     async onModuleInit() {
+        await this.initializeClient();
+    }
+
+    private async initializeClient() {
         try {
             const config: QdrantConfig = {
                 host: this.configService.get<string>('QDRANT_HOST') || 'localhost',
@@ -25,7 +30,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
                 https: this.configService.get<string>('QDRANT_HTTPS') === 'true',
             };
 
-            // Only include apiKey if it exists
             const apiKey = this.configService.get<string>('QDRANT_API_KEY');
 
             if (apiKey) {
@@ -38,25 +42,39 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
                     url: `${config.https ? 'https' : 'http'}://${config.host}:${config.port}`,
                 });
             }
+
+            // Test the connection
+            await this.client.getCollections();
+            this.isInitialized = true;
+            this.logger.log('Qdrant client initialized successfully');
         } catch (error) {
-            this.logger.error('Qdrant health check failed:', error);
+            this.logger.error('Failed to initialize Qdrant client:', error);
+            // Don't throw here - let the application start but mark as not initialized
         }
     }
 
     async onModuleDestroy() {
-        // Qdrant client doesn't require explicit cleanup
+        this.isInitialized = false;
         this.logger.log('Qdrant connection closed');
     }
 
     getClient(): QdrantClient {
-        if (!this.client) {
+        if (!this.client || !this.isInitialized) {
             throw new Error('Qdrant client is not initialized');
         }
         return this.client;
     }
 
+    isReady(): boolean {
+        return this.isInitialized && !!this.client;
+    }
+
     async healthCheck() {
         try {
+            if (!this.isReady()) {
+                throw new Error('Qdrant client not initialized');
+            }
+
             const collections = await this.client.getCollections();
             return {
                 status: 'healthy',
@@ -65,7 +83,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             };
         } catch (error) {
             this.logger.error('Qdrant health check failed:', error);
-            throw new Error(`Qdrant health check failed:`);
+            return {
+                status: 'unhealthy',
+                error: error.message,
+                timestamp: new Date().toISOString(),
+            };
         }
     }
 
@@ -76,6 +98,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         distance: 'Cosine' | 'Euclid' | 'Dot' = 'Cosine'
     ) {
         try {
+            if (!this.isReady()) {
+                throw new Error('Qdrant client not initialized');
+            }
+
             const collections = await this.client.getCollections();
             const exists = collections.collections.some(
                 (collection) => collection.name === collectionName
@@ -100,6 +126,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     async deleteCollection(collectionName: string) {
         try {
+            if (!this.isReady()) {
+                throw new Error('Qdrant client not initialized');
+            }
+
             await this.client.deleteCollection(collectionName);
             this.logger.log(`Deleted collection: ${collectionName}`);
         } catch (error) {
@@ -111,6 +141,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     // Index management
     async createIndex(collectionName: string, fieldName: string, fieldType: string) {
         try {
+            if (!this.isReady()) {
+                throw new Error('Qdrant client not initialized');
+            }
+
             await this.client.createPayloadIndex(collectionName, {
                 field_name: fieldName,
                 field_schema: fieldType as any,
@@ -118,7 +152,23 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             this.logger.log(`Created index on ${collectionName}.${fieldName}`);
         } catch (error) {
             this.logger.error(`Failed to create index on ${collectionName}.${fieldName}:`, error);
-            throw error;
+            // Don't throw for index creation failures - they're not critical
+        }
+    }
+
+    async collectionExists(collectionName: string): Promise<boolean> {
+        try {
+            if (!this.isReady()) {
+                return false;
+            }
+
+            const collections = await this.client.getCollections();
+            return collections.collections.some(
+                (collection) => collection.name === collectionName
+            );
+        } catch (error) {
+            this.logger.error(`Failed to check if collection ${collectionName} exists:`, error);
+            return false;
         }
     }
 }

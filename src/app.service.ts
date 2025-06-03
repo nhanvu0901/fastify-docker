@@ -10,11 +10,14 @@ export class AppService {
     }
 
     async getHealthStatus() {
+        const timestamp = new Date().toISOString();
+
         try {
             const dbHealth = await this.databaseService.healthCheck();
+
             return {
-                status: 'ok',
-                timestamp: new Date().toISOString(),
+                status: dbHealth.status === 'healthy' ? 'ok' : 'degraded',
+                timestamp,
                 services: {
                     api: 'healthy',
                     database: dbHealth.status,
@@ -23,8 +26,8 @@ export class AppService {
             };
         } catch (error) {
             return {
-                status: 'error',
-                timestamp: new Date().toISOString(),
+                status: 'degraded',
+                timestamp,
                 services: {
                     api: 'healthy',
                     database: 'unhealthy',
