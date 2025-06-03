@@ -1,19 +1,18 @@
-FROM node:18-alpine AS builder
+FROM node:18-alpine AS base
 WORKDIR /app
 
-# Copy package.json and package-lock.json (if available)
+# Copy package files
 COPY package*.json ./
+COPY tsconfig*.json ./
+COPY nest-cli*.json ./
 
-# Copy tsconfig.json for the build process
-COPY tsconfig.json ./
-
-# Install all dependencies (including devDependencies)
+# ---- Dependencies Stage ----
+FROM base AS dependencies
 RUN npm ci
 
-# Copy the rest of the application source code
-COPY ./src ./src
-
-# Build the TypeScript code
+# ---- Build Stage ----
+FROM dependencies AS build
+COPY src/ ./src/
 RUN npm run build
 
 # ---- Production Stage ----
@@ -21,46 +20,31 @@ FROM node:18-alpine AS production
 ENV NODE_ENV=production
 WORKDIR /app
 
-# Copy package.json and package-lock.json for installing production dependencies
-COPY package.json ./
-COPY package-lock.json ./
+# Copy package files and install production dependencies
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
 
-# Install only production dependencies
-RUN npm ci --omit=dev && npm cache clean --force
+# Copy built application
+COPY --from=build /app/dist ./dist
 
-# Copy the built application from the builder stage
-COPY --from=builder /app/dist ./dist
-
-# Expose the port the app runs on
+# Expose port
 EXPOSE 3000
 
-# Define the command to run the app
-CMD [ "node", "dist/app.js" ]
+# Start command
+CMD ["node", "dist/main"]
 
-# ---- Development/Debug Stage ----
-FROM node:18-alpine AS development
+# ---- Development Stage ----
+FROM dependencies AS development
 ENV NODE_ENV=development
-WORKDIR /app
-
-# Copy package.json and package-lock.json
-COPY package.json ./
-COPY package-lock.json ./
-
-# Install all dependencies (including devDependencies for development)
-RUN npm ci
-
-# Copy tsconfig.json
-COPY tsconfig.json ./
 
 # Copy source code
-COPY ./src ./src
+COPY src/ ./src/
 
-# Install ts-node and nodemon globally for development
-RUN npm install -g ts-node nodemon
+# Install development tools globally
+RUN npm install -g @nestjs/cli
 
-# Expose both app port and debug port
+# Expose both app and debug ports
 EXPOSE 3000 9229
 
-# Command for development with debugging enabled
-# Pass --inspect flag to node through nodemon's --nodeArgs
-CMD ["nodemon", "--exec", "node", "--inspect=0.0.0.0:9229", "-r", "ts-node/register", "src/app.ts"]
+# Development command with debugging
+CMD ["npm", "run", "start:debug"]
