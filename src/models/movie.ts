@@ -75,7 +75,10 @@ export class MovieModel {
                 conditions.push('movie.language = $language');
                 params.language = language;
             }
-
+            // Add minRating to params if provided
+            if (minRating) {
+                params.minRating = minRating;
+            }
             // Build the WHERE clause properly
             const whereClause = conditions.join(' AND ');
 
@@ -89,13 +92,8 @@ export class MovieModel {
             ${minRating ? 'WHERE avgRating >= $minRating' : ''}
             RETURN movie, avgRating, ratingsCount
             ORDER BY avgRating DESC, ratingsCount DESC
-            LIMIT $limit
+            LIMIT toInteger($limit)
         `;
-
-            // Add minRating to params if provided
-            if (minRating) {
-                params.minRating = minRating;
-            }
 
             const result = await this.fastify.queryDatabase(cypher, params);
             return result.records.map(record => this.recordToMovie(record));

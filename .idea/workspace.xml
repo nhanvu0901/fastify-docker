@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="167bdefe-d740-4066-804d-94e0c3723261" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/api/routes/movies/movie.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/routes/movies/movie.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/models/movie.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/models/movie.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -46,23 +45,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Attach to Node.js/Chrome.Unnamed.executor&quot;: &quot;Debug&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;day10&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/nhanvu/Documents/fastify-docker/src/api/routes/movies&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;settings.typescriptcompiler&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;/Users/nhanvu/Documents/fastify-docker/node_modules/typescript/lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Attach to Node.js/Chrome.Unnamed.executor": "Debug",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "day10",
+    "last_opened_file_path": "/Users/nhanvu/Documents/fastify-docker/src/api/routes/movies",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "settings.typescriptcompiler",
+    "ts.external.directory.path": "D:\\Learn code\\Fastify-docker\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/api/routes/movies" />
@@ -111,36 +110,6 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/api/routes/users/users.ts</url>
-          <line>44</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/api/routes/users/users.ts</url>
-          <line>72</line>
-          <option name="timeStamp" value="4" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/api/routes/users/users.ts</url>
-          <line>71</line>
-          <option name="timeStamp" value="5" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/models/user.ts</url>
-          <line>38</line>
-          <option name="timeStamp" value="6" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/models/user.ts</url>
-          <line>39</line>
-          <option name="timeStamp" value="7" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/models/user.ts</url>
-          <line>42</line>
-          <option name="timeStamp" value="9" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/utils/realMovieSeeder.ts</url>
           <line>58</line>
           <option name="timeStamp" value="36" />
@@ -178,44 +147,36 @@
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/api/routes/movies/movie.ts</url>
           <line>44</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="50" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/api/routes/movies/movie.ts</url>
-          <line>46</line>
-          <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="53" />
+          <line>18</line>
+          <option name="timeStamp" value="62" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/plugins/database.ts</url>
-          <line>50</line>
+          <url>file://$PROJECT_DIR$/src/api/routes/movies/movie.ts</url>
+          <line>20</line>
           <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="57" />
+          <option name="timeStamp" value="63" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/src/models/movie.ts</url>
+          <line>97</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="64" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/plugins/database.ts</url>
           <line>51</line>
           <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="58" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/plugins/database.ts</url>
-          <line>53</line>
-          <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="60" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/plugins/database.ts</url>
-          <line>54</line>
-          <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="61" />
+          <option name="timeStamp" value="65" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/api/routes/movies/movie.ts</url>
-          <line>18</line>
+          <line>35</line>
           <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="62" />
+          <option name="timeStamp" value="67" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
