@@ -9,10 +9,9 @@ import { AppService } from './app.service';
 
 @Module({
     imports: [
-        // Global configuration
         ConfigModule.forRoot({
-            isGlobal: true,
-            envFilePath: '.env',
+            isGlobal: true,//Makes ConfigService available throughout the entire app (isGlobal: true)
+            envFilePath: '.env',//Reads the .env file specified in envFilePath: '.env'
         }),
         // Database connection
         DatabaseModule,

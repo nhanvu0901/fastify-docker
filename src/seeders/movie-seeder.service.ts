@@ -247,27 +247,6 @@ export class MovieSeederService implements OnModuleInit {
         return parts.join(' ').toLowerCase();
     }
 
-    async clearMovieData(): Promise<void> {
-        try {
-            if (!this.databaseService.isReady()) {
-                throw new Error('Database is not ready');
-            }
-
-            this.logger.log('Clearing all movie data...');
-
-            // Delete the entire collection
-            await this.databaseService.deleteCollection(COLLECTIONS.MOVIES);
-
-            // Recreate the collection
-            await this.databaseService.ensureCollection(COLLECTIONS.MOVIES, 384);
-
-            this.logger.log('Movie data cleared successfully');
-        } catch (error) {
-            this.logger.error('Error clearing movie data:', error);
-            throw error;
-        }
-    }
-
     async getSeededStatistics(): Promise<any> {
         try {
             if (!this.databaseService.isReady()) {
@@ -330,59 +309,6 @@ export class MovieSeederService implements OnModuleInit {
             };
         } catch (error) {
             this.logger.error('Error getting seeded statistics:', error);
-            throw error;
-        }
-    }
-
-    // Utility method to re-seed with new embeddings
-    async regenerateEmbeddings(): Promise<void> {
-        try {
-            if (!this.databaseService.isReady()) {
-                throw new Error('Database is not ready');
-            }
-
-            this.logger.log('Regenerating embeddings for all movies...');
-
-            const allMovies = await this.databaseService.getClient().scroll(COLLECTIONS.MOVIES, {
-                limit: 10000,
-                with_payload: true,
-                with_vector: false,
-            });
-
-            const batchSize = 10;
-            let processed = 0;
-
-            for (let i = 0; i < allMovies.points.length; i += batchSize) {
-                const batch = allMovies.points.slice(i, i + batchSize);
-
-                const updates = await Promise.all(
-                    batch.map(async (point) => {
-                        const payload = point.payload;
-                        const searchText = payload?.searchText as string || payload?.title as string || '';
-                        const newEmbedding = await this.embeddingService.generateEmbedding(searchText);
-
-                        return {
-                            id: point.id,
-                            vector: newEmbedding,
-                            payload: payload || {},
-                        };
-                    })
-                );
-
-                await this.databaseService.getClient().upsert(COLLECTIONS.MOVIES, {
-                    wait: true,
-                    points: updates,
-                });
-
-                processed += batch.length;
-                if (processed % 50 === 0) {
-                    this.logger.log(`Regenerated embeddings for ${processed}/${allMovies.points.length} movies`);
-                }
-            }
-
-            this.logger.log('Embedding regeneration completed');
-        } catch (error) {
-            this.logger.error('Error regenerating embeddings:', error);
             throw error;
         }
     }

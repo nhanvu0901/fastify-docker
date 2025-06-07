@@ -5,7 +5,7 @@ import { DatabaseService } from './database.service';
 @Global()
 @Module({
     imports: [ConfigModule],
-    providers: [DatabaseService],
-    exports: [DatabaseService],
+    providers: [DatabaseService],// ← This tells NestJS "create this service"
+    exports: [DatabaseService],// ← This tells NestJS "other modules can use it"
 })
 export class DatabaseModule {}

@@ -11,13 +11,15 @@ export interface QdrantConfig {
 
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
+    // implements It's like a promise that your class will have certain methods.
     private readonly logger = new Logger(DatabaseService.name);
     private client: QdrantClient;
     private isInitialized = false;
 
     constructor(private configService: ConfigService) {
     }
-
+    //When it runs: After all module dependencies have been resolved and injected
+    //Purpose: Perfect for initialization logic that needs dependencies to be ready
     async onModuleInit() {
         await this.initializeClient();
     }
@@ -52,7 +54,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             // Don't throw here - let the application start but mark as not initialized
         }
     }
-
+    // When it runs: Just before the application shuts down
+    // Purpose: Cleanup resources, close connections, save data
     async onModuleDestroy() {
         this.isInitialized = false;
         this.logger.log('Qdrant connection closed');

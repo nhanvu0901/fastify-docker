@@ -1,0 +1,278 @@
+# Docker Multi-Stage Build Explanation
+
+## 🎯 Overview: Why Multi-Stage Builds?
+
+**Problem**: A typical Node.js app needs different things for development vs production:
+- **Development**: Source code, dev dependencies, debugging tools, hot reload
+- **Production**: Only compiled code, production dependencies, minimal footprint
+
+**Solution**: Multi-stage builds create specialized images for different purposes from the same Dockerfile.
+
+---
+
+## 📋 Stage-by-Stage Breakdown
+
+### 1. **BASE Stage**
+```dockerfile
+FROM node:18-alpine AS base
+WORKDIR /app
+COPY package*.json ./
+COPY tsconfig*.json ./
+COPY nest-cli*.json ./
+```
+
+**What it does:**
+- Creates the foundation layer
+- Sets up working directory
+- Copies configuration files needed by ALL other stages
+
+**Why we need it:**
+- **Shared foundation**: All other stages inherit from here
+- **DRY principle**: Avoids copying config files multiple times
+- **Consistency**: Ensures all stages use same Node.js version and configs
+
+**Contains:**
+- ✅ Node.js runtime (18-alpine)
+- ✅ package.json, tsconfig.json, nest-cli.json
+- ❌ No dependencies installed yet
+- ❌ No source code
+
+---
+
+### 2. **DEPENDENCIES Stage**
+```dockerfile
+FROM base AS dependencies
+RUN npm ci
+```
+
+**What it does:**
+- Inherits everything from BASE
+- Installs ALL dependencies (both production AND development)
+
+**Why we need it:**
+- **Build requirements**: TypeScript compilation needs dev dependencies (`@types/*`, `typescript`, etc.)
+- **Shared layer**: Both BUILD and DEVELOPMENT stages need these dependencies
+- **Caching optimization**: Docker caches this layer - if package.json doesn't change, dependencies don't reinstall
+
+**Contains:**
+- ✅ Everything from BASE
+- ✅ ALL npm packages (prod + dev dependencies)
+- ❌ No source code yet
+- ❌ No compiled code
+
+**Example dependencies installed:**
+- Production: `@nestjs/core`, `fastify`, `@qdrant/js-client-rest`
+- Development: `typescript`, `@types/node`, `eslint`, `jest`
+
+---
+
+### 3. **BUILD Stage**
+```dockerfile
+FROM dependencies AS build
+COPY src/ ./src/
+RUN npm run build
+```
+
+**What it does:**
+- Inherits dependencies + configs
+- Copies source code
+- Compiles TypeScript to JavaScript
+
+**Why we need it:**
+- **Compilation**: Transforms TypeScript source → JavaScript dist
+- **Production prep**: Creates optimized, compiled code for production
+- **Separation**: Keeps build artifacts separate from source
+
+**Contains:**
+- ✅ Everything from DEPENDENCIES
+- ✅ Source code (`src/` folder)
+- ✅ Compiled code (`dist/` folder)
+
+**Build process:**
+```bash
+# What npm run build does:
+nest build
+# → Compiles src/**/*.ts to dist/**/*.js
+# → Optimizes for production
+# → Removes TypeScript-specific code
+```
+
+---
+
+### 4. **PRODUCTION Stage**
+```dockerfile
+FROM node:18-alpine AS production  # Fresh start!
+ENV NODE_ENV=production
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+COPY --from=build /app/dist ./dist
+EXPOSE 3000
+CMD ["node", "dist/main"]
+```
+Tại sao phải "bắt đầu mới"?
+1. Vấn đề của kế thừa:
+Nếu production stage kế thừa từ dependencies stage:
+dockerfileFROM dependencies AS production  # Kế thừa MỌI THỨ từ dependencies
+Sẽ có những gì:
+
+✅ Node.js runtime
+✅ Production dependencies
+❌ Development dependencies (không cần thiết!)
+❌ Build tools (typescript compiler, eslint, jest...)
+❌ Cache files từ npm install
+❌ Temporary files từ quá trình build
+
+Kết quả: Image production nặng 400-500MB thay vì 150MB
+2. Lợi ích của "Fresh start":
+dockerfileFROM node:18-alpine AS production  # Bắt đầu từ con số 0
+Image production chỉ chứa:
+
+✅ Node.js runtime (50MB)
+✅ package.json
+✅ CHỈ production dependencies (~80MB)
+✅ Compiled JavaScript code từ /dist (~20MB)
+❌ KHÔNG CÓ dev dependencies
+❌ KHÔNG CÓ source code TypeScript
+❌ KHÔNG CÓ build tools
+**What it does:**
+- Starts from FRESH Node.js image (not inheriting bloated dependencies)
+- Installs ONLY production dependencies
+- Copies ONLY compiled code from BUILD stage
+- Sets up production runtime
+
+**Why we need it:**
+- **Minimal footprint**: No dev dependencies, no source code, no build tools
+- **Security**: Smaller attack surface
+- **Performance**: Faster startup, less memory usage
+- **Clean slate**: No leftover files from development/build
+
+**Contains:**
+- ✅ Node.js runtime
+- ✅ package.json
+- ✅ ONLY production dependencies
+- ✅ Compiled JavaScript (`dist/`)
+- ❌ No TypeScript source code
+- ❌ No dev dependencies (@types/*, eslint, jest, etc.)
+- ❌ No build tools
+
+**Size comparison:**
+- With dev dependencies: ~500MB
+- Production only: ~150MB
+
+---
+
+### 5. **DEVELOPMENT Stage**
+```dockerfile
+FROM dependencies AS development
+ENV NODE_ENV=development
+RUN npm install -g @nestjs/cli nodemon
+COPY src/ ./src/
+COPY nest-cli.json ./
+COPY tsconfig.json ./
+COPY tsconfig.build.json ./
+EXPOSE 3000 9229
+CMD ["npm", "run", "start:debug"]
+```
+
+**What it does:**
+- Inherits ALL dependencies from DEPENDENCIES stage
+- Adds development tools
+- Copies source code (not compiled)
+- Sets up debugging and hot reload
+
+**Why we need it:**
+- **Development workflow**: Hot reload, debugging, testing
+- **All tools available**: Can run tests, linting, compilation on-demand
+- **Source code access**: Direct access to TypeScript files
+- **Debugging**: Debug port exposed, source maps available
+
+**Contains:**
+- ✅ Everything from DEPENDENCIES
+- ✅ Source code (TypeScript)
+- ✅ Development tools (NestJS CLI, nodemon)
+- ✅ Debug capabilities
+- ✅ Hot reload support
+
+---
+
+## 🔄 Stage Inheritance Flow
+
+```
+node:18-alpine
+    ↓
+  BASE (configs)
+    ↓
+DEPENDENCIES (+ npm packages)
+    ↓                    ↓
+  BUILD              DEVELOPMENT
+(+ compile)          (+ dev tools)
+    ↓
+PRODUCTION ← copies dist/ only
+(fresh image + prod deps)
+```
+
+---
+
+## 🎯 Benefits of This Approach
+
+### 1. **Optimized Images**
+- **Production**: Minimal, fast, secure
+- **Development**: Full-featured, debugging-enabled
+
+### 2. **Build Caching**
+- Dependencies layer cached until package.json changes
+- Base layer cached until configs change
+- Faster rebuilds during development
+
+### 3. **Separation of Concerns**
+- **BUILD**: Focus on compilation
+- **PRODUCTION**: Focus on runtime
+- **DEVELOPMENT**: Focus on developer experience
+
+### 4. **Flexibility**
+- Can build different targets from same Dockerfile
+- Easy to add new stages (e.g., testing stage)
+
+---
+
+## 📊 Real-World Impact
+
+### Single-stage approach (bad):
+```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci  # Installs ALL dependencies
+COPY . .
+RUN npm run build
+CMD ["node", "dist/main"]
+```
+**Result**: 500MB+ image with unnecessary dev dependencies in production
+
+### Multi-stage approach (good):
+- **Development image**: 500MB+ (includes everything)
+- **Production image**: 150MB (minimal)
+- **Build time**: Faster due to caching
+- **Security**: Reduced attack surface
+
+---
+
+## 🚀 Usage
+
+### Build for development:
+```bash
+docker build --target development -t myapp:dev .
+```
+
+### Build for production:
+```bash
+docker build --target production -t myapp:prod .
+```
+
+### Docker Compose (uses development):
+```bash
+docker-compose up  # Uses development stage
+```
+
+This is why each stage exists and why multi-stage builds are considered a Docker best practice for Node.js applications!

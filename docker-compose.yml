@@ -24,7 +24,7 @@ services:
   app:
     build:
       context: .
-      target: development
+      target: development #run the dokerfile developement only
     container_name: nestjs_app_dev
     restart: unless-stopped
     environment:
@@ -34,13 +34,13 @@ services:
       QDRANT_PORT: 6333
       QDRANT_API_KEY: ""
       QDRANT_HTTPS: false
+      # Fix TypeScript compilation issues
+      TS_NODE_TRANSPILE_ONLY: true
+      TS_NODE_FILES: true
     ports:
       - "3000:3000"  # Web API port
       - "9229:9229"  # Node.js debugging port
     env_file: .env
-#    depends_on:
-#      qdrant:
-#        condition: service_healthy
     networks:
       - app_network
     volumes:
@@ -48,8 +48,10 @@ services:
       - ./package.json:/app/package.json
       - ./nest-cli.json:/app/nest-cli.json
       - ./tsconfig.json:/app/tsconfig.json
+      - ./tsconfig.build.json:/app/tsconfig.build.json
       - ./top_movie.json:/app/top_movie.json
-    command: npm run start:debug
+    # THAY ĐỔI COMMAND ĐỂ BYPASS NESTJS CLI
+    command: node --inspect=0.0.0.0:9229 -r ts-node/register src/main.ts
 
 volumes:
   qdrant_data:

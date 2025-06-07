@@ -31,7 +31,6 @@ export class MoviesService implements OnModuleInit {
                     return;
                 }
             }
-
             await this.initializeCollection();
         } catch (error) {
             if (currentAttempt <= maxRetries) {
@@ -91,6 +90,7 @@ export class MoviesService implements OnModuleInit {
                     with_vector: false,
                     score_threshold: 0.3, // Minimum similarity threshold
                 });
+
 
                 const movies = response.map(point => this.mapPointToMovie(point));
                 return { movies };

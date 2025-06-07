@@ -4,11 +4,12 @@
   "description": "NestJS app with Fastify adapter and Qdrant vector database",
   "main": "dist/main.js",
   "scripts": {
+    "start:debug": "nest start --debug 0.0.0.0:9229 --watch",
+    "start:debug:alt": "node --inspect=0.0.0.0:9229 -r ts-node/register src/main.ts",
+    "start:dev": "nest start --watch",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug 0.0.0.0:9229 --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
@@ -29,7 +30,7 @@
     "@nestjs/swagger": "^7.2.0",
     "@nestjs/config": "^3.1.1",
     "@nestjs/mapped-types": "*",
-    "@qdrant/js-client-rest": "1.7.0",
+    "@qdrant/js-client-rest": "^1.12.0",
     "fastify": "^4.24.3",
     "@fastify/swagger": "^8.14.0",
     "@fastify/swagger-ui": "^4.0.0",
@@ -42,8 +43,10 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.2.1",
-    "@nestjs/schematics": "^10.0.3",
+    "@nestjs/cli": "10.4.0",
+    "typescript": "5.4.5",
+    "@nestjs/schematics": "^10.1.1",
+    "ts-node": "10.9.2",
     "@nestjs/testing": "^10.3.0",
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.2",
@@ -62,9 +65,7 @@
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.3",
-    "ts-node": "^10.9.1",
-    "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.2.2"
+    "tsconfig-paths": "^4.2.0"
   },
   "jest": {
     "moduleFileExtensions": [
