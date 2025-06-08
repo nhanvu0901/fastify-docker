@@ -1,9 +1,9 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { COLLECTIONS, VECTOR_DIMENSIONS } from '../database/database.constants';
-import { EmbeddingService } from './embedding.service';
-import { MovieSearchDto } from './dto/movie-search.dto';
-import { Movie } from '../common/interfaces';
+import {Injectable, Logger, OnModuleInit} from '@nestjs/common';
+import {DatabaseService} from '../database/database.service';
+import {COLLECTIONS, VECTOR_DIMENSIONS} from '../database/database.constants';
+import {EmbeddingService} from './embedding.service';
+import {MovieSearchDto} from './dto/movie-search.dto';
+import {Movie} from '../common/interfaces';
 
 @Injectable()
 export class MoviesService implements OnModuleInit {
@@ -12,7 +12,8 @@ export class MoviesService implements OnModuleInit {
     constructor(
         private readonly databaseService: DatabaseService,
         private readonly embeddingService: EmbeddingService,
-    ) {}
+    ) {
+    }
 
     async onModuleInit() {
         // Initialize with retry logic
@@ -70,6 +71,10 @@ export class MoviesService implements OnModuleInit {
             if (!this.databaseService.isReady()) {
                 throw new Error('Database is not ready');
             }
+            const collectionExists = await this.databaseService.collectionExists(COLLECTIONS.MOVIES);
+            if(!collectionExists) {
+                throw new Error(`Collection ${COLLECTIONS.MOVIES} not found`);
+            }
 
             let searchVector: number[] | null = null;
 
@@ -77,23 +82,23 @@ export class MoviesService implements OnModuleInit {
             if (searchDto.q) {
                 searchVector = await this.embeddingService.generateEmbedding(searchDto.q);
             }
-
             const filter = this.buildFilter(searchDto);
 
             if (searchVector) {
-                // Semantic search with vector similarity
-                const response = await this.databaseService.getClient().search(COLLECTIONS.MOVIES, {
-                    vector: searchVector,
-                    limit: searchDto.limit || 20,
-                    filter,
-                    with_payload: true,
-                    with_vector: false,
-                    score_threshold: 0.3, // Minimum similarity threshold
-                });
-
-
-                const movies = response.map(point => this.mapPointToMovie(point));
-                return { movies };
+                try {
+                    // Semantic search with vector similarity
+                    const response = await this.databaseService.getClient().search(COLLECTIONS.MOVIES, {
+                        vector: searchVector,
+                        limit: searchDto.limit || 20,
+                        filter,
+                        with_payload: true,
+                        with_vector: false,
+                    });
+                    const movies = response.map(point => this.mapPointToMovie(point));
+                    return {movies};
+                } catch (error) {
+                    this.logger.error('Failed to search movies collection:', error);
+                }
             } else {
                 // Filter-only search (no text query)
                 const response = await this.databaseService.getClient().scroll(COLLECTIONS.MOVIES, {
@@ -104,7 +109,7 @@ export class MoviesService implements OnModuleInit {
                 });
 
                 const movies = response.points.map(point => this.mapPointToMovie(point));
-                return { movies };
+                return {movies};
             }
         } catch (error) {
             this.logger.error('Error searching movies:', error);
@@ -273,7 +278,7 @@ export class MoviesService implements OnModuleInit {
             });
         }
 
-        return mustConditions.length > 0 ? { must: mustConditions } : undefined;
+        return mustConditions.length > 0 ? {must: mustConditions} : undefined;
     }
 
     private mapPointToMovie(point: any): Movie {

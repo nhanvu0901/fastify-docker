@@ -159,7 +159,24 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         }
     }
 
-    async collectionExists(collectionName: string): Promise<boolean> {
+
+    async collectionExists(collectionName: string):Promise<boolean> {
+        try{
+            if(!this.isReady()) {
+                throw new Error('Qdrant client not initialized');
+                return false
+            }
+
+            const collection = await this.client.getCollection(collectionName);
+            return collection?.optimizer_status === 'ok';
+        }
+        catch(error) {
+            this.logger.error(`Failed to check if collection ${collectionName} exists:`, error);
+            return false;
+        }
+    }
+
+    /*async collectionExists(collectionName: string): Promise<boolean> {
         try {
             if (!this.isReady()) {
                 return false;
@@ -173,5 +190,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             this.logger.error(`Failed to check if collection ${collectionName} exists:`, error);
             return false;
         }
-    }
+    }*/
+
+
 }

@@ -234,9 +234,12 @@ export class MovieSeederService implements OnModuleInit {
     }
 
     private createSearchableText(movie: IMDBMovie): string {
-        // Combine multiple fields for better semantic search
+
+        const title_array = movie.primaryTitle.toLowerCase().split(' ');
+
         const parts = [
-            movie.primaryTitle,
+            ...title_array,
+            ...title_array,
             movie.originalTitle,
             movie.description,
             movie.genres.join(' '),
@@ -252,14 +255,12 @@ export class MovieSeederService implements OnModuleInit {
             if (!this.databaseService.isReady()) {
                 return { error: 'Database not ready' };
             }
-
             const movieCount = await this.databaseService.getClient().count(COLLECTIONS.MOVIES);
 
             if (movieCount.count === 0) {
                 return { movies: 0 };
             }
 
-            // Get sample data for analysis
             const sampleResponse = await this.databaseService.getClient().scroll(COLLECTIONS.MOVIES, {
                 limit: Math.min(1000, movieCount.count),
                 with_payload: true,
