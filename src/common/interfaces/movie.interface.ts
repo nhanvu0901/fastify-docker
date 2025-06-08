@@ -4,6 +4,7 @@ export interface Movie {
     originalTitle?: string;
     description: string;
     releaseDate: Date;
+    releaseYear: number;
     duration: number; // in minutes
     imdbId?: string;
     imdbRating?: number;

@@ -238,13 +238,18 @@ export class MovieSeederService implements OnModuleInit {
         const title_array = movie.primaryTitle.toLowerCase().split(' ');
 
         const parts = [
-            ...title_array,
-            ...title_array,
+            movie.primaryTitle,
+            movie.primaryTitle,
+
             movie.originalTitle,
             movie.description,
+
             movie.genres.join(' '),
             movie.interests.join(' '),
+
             movie.productionCompanies.map(c => c.name).join(' '),
+            movie.spokenLanguages.join(' '),
+            movie.countriesOfOrigin.join(' ')
         ].filter(Boolean);
 
         return parts.join(' ').toLowerCase();

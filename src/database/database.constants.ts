@@ -4,6 +4,6 @@ export const COLLECTIONS = {
 } as const;
 
 export const VECTOR_DIMENSIONS = {
-    MOVIE_EMBEDDINGS: 384, // For sentence transformers
-    USER_PREFERENCES: 128,
+    MOVIE_EMBEDDINGS: 1024, // Changed from 384 to 1024 for Cohere
+    USER_EMBEDDINGS: 1024,
 } as const;

@@ -72,49 +72,105 @@ export class MoviesService implements OnModuleInit {
                 throw new Error('Database is not ready');
             }
             const collectionExists = await this.databaseService.collectionExists(COLLECTIONS.MOVIES);
-            if(!collectionExists) {
+            if (!collectionExists) {
                 throw new Error(`Collection ${COLLECTIONS.MOVIES} not found`);
             }
 
-            let searchVector: number[] | null = null;
-
-            // If there's a text query, generate embedding for semantic search
-            if (searchDto.q) {
-                searchVector = await this.embeddingService.generateEmbedding(searchDto.q);
-            }
             const filter = this.buildFilter(searchDto);
 
-            if (searchVector) {
+            if (searchDto.q) {
                 try {
-                    // Semantic search with vector similarity
-                    const response = await this.databaseService.getClient().search(COLLECTIONS.MOVIES, {
-                        vector: searchVector,
-                        limit: searchDto.limit || 20,
-                        filter,
-                        with_payload: true,
-                        with_vector: false,
-                    });
-                    const movies = response.map(point => this.mapPointToMovie(point));
-                    return {movies};
+                    const vectorResults = await this.performVectorSearch(searchDto.q, filter, searchDto.limit);
+                    if (vectorResults.length > 0) {
+                        return {movies: vectorResults};
+                    }
                 } catch (error) {
-                    this.logger.error('Failed to search movies collection:', error);
+                    this.logger.warn('Vector search failed, falling back to text search:', error.message);
                 }
-            } else {
-                // Filter-only search (no text query)
-                const response = await this.databaseService.getClient().scroll(COLLECTIONS.MOVIES, {
-                    limit: searchDto.limit || 20,
-                    filter,
-                    with_payload: true,
-                    with_vector: false,
-                });
 
-                const movies = response.points.map(point => this.mapPointToMovie(point));
-                return {movies};
+                return await this.performTextSearch(searchDto, filter);
+            } else {
+               return await this.performFilterSearch(searchDto.q, filter);
             }
+
         } catch (error) {
             this.logger.error('Error searching movies:', error);
             throw error;
         }
+    }
+
+    async performVectorSearch(query: string, filter: any, limit: number = 20): Promise<Movie[]> {
+        try {
+            const searchVector = await this.embeddingService.generateEmbedding(query);
+            const result = await this.databaseService.getClient().search(COLLECTIONS.MOVIES, {
+                vector: searchVector,
+                limit,
+                filter,
+                with_payload: true,
+                with_vector: false,
+                score_threshold: 0.8, // Add minimum similarity threshold
+            })
+            return result.map(point => this.mapPointToMovie(point));
+        } catch (error) {
+            this.logger.error('Error performVectorSearch movies:', error);
+        }
+    }
+
+    private async performTextSearch(searchDto: MovieSearchDto, filter: any): Promise<{ movies: Movie[] }> {
+        // Enhanced filter for text search
+        const textFilter = this.buildTextFilter(searchDto, filter);
+
+        const response = await this.databaseService.getClient().scroll(COLLECTIONS.MOVIES, {
+            limit: searchDto.limit || 20,
+            filter: textFilter,
+            with_payload: true,
+            with_vector: false,
+        });
+
+        const movies = response.points.map(point => this.mapPointToMovie(point));
+        return { movies };
+    }
+
+    private async performFilterSearch(filter: any, limit: number = 20): Promise<{ movies: Movie[] }> {
+        const response = await this.databaseService.getClient().scroll(COLLECTIONS.MOVIES, {
+            limit,
+            filter,
+            with_payload: true,
+            with_vector: false,
+        });
+
+        const movies = response.points.map(point => this.mapPointToMovie(point));
+        return { movies };
+    }
+
+    private buildTextFilter(searchDto: MovieSearchDto, existingFilter: any): any {
+        const mustConditions = existingFilter?.must || [];
+
+        // Add text search conditions
+        if (searchDto.q) {
+            const searchTerms = searchDto.q.toLowerCase().split(' ').filter(term => term.length > 2);
+
+            const textConditions = searchTerms.map(term => ({
+                key: 'searchText',
+                match: {
+                    text: term
+                }
+            }));
+
+            mustConditions.push({
+                should: [
+                    ...textConditions,
+                    {
+                        key: 'title',
+                        match: {
+                            text: searchDto.q
+                        }
+                    }
+                ]
+            });
+        }
+
+        return mustConditions.length > 0 ? { must: mustConditions } : undefined;
     }
 
     async findAll(searchDto: MovieSearchDto): Promise<{ movies: Movie[]; total: number }> {
@@ -289,6 +345,7 @@ export class MoviesService implements OnModuleInit {
             originalTitle: payload.originalTitle,
             description: payload.description,
             releaseDate: new Date(payload.releaseDate),
+            releaseYear: payload.releaseYear,
             duration: payload.duration,
             imdbId: payload.imdbId,
             imdbRating: payload.imdbRating,
