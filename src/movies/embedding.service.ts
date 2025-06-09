@@ -48,15 +48,6 @@ export class EmbeddingService {
                     await this.delay(delayMs);
                     return this.generateEmbedding(text, maxRetries, currentAttempt + 1);
                 }
-            } else if (response.status >= 500) {
-                // Server error - retry with shorter delay
-                if (currentAttempt <= maxRetries) {
-                    const delayMs = 2000; // Fixed 2s delay for server errors
-                    this.logger.warn(`Cohere server error (${response.status}), retrying in ${delayMs}ms (attempt ${currentAttempt}/${maxRetries})`);
-
-                    await this.delay(delayMs);
-                    return this.generateEmbedding(text, maxRetries, currentAttempt + 1);
-                }
             } else {
                 // Client error (400-499) - don't retry, these won't succeed
                 this.logger.error(`Cohere client error (${response.status}): ${response.statusText}`);

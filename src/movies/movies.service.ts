@@ -79,24 +79,39 @@ export class MoviesService implements OnModuleInit {
             const filter = this.buildFilter(searchDto);
 
             if (searchDto.q) {
+                const query = this.preProcessQuery(searchDto.q)
                 try {
-                    const vectorResults = await this.performVectorSearch(searchDto.q, filter, searchDto.limit);
+                    const vectorResults = await this.performVectorSearch(query, filter, searchDto.limit);
                     if (vectorResults.length > 0) {
                         return {movies: vectorResults};
                     }
                 } catch (error) {
                     this.logger.warn('Vector search failed, falling back to text search:', error.message);
                 }
-
                 return await this.performTextSearch(searchDto, filter);
             } else {
-               return await this.performFilterSearch(searchDto.q, filter);
+                return await this.performFilterSearch(searchDto.q, filter);
             }
 
         } catch (error) {
             this.logger.error('Error searching movies:', error);
             throw error;
         }
+    }
+
+    private preProcessQuery(query: string): string {
+        const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
+
+        const cleaned = query
+            .toLowerCase()
+            .trim()
+            .replace(/[^\w\s]/g, ' ') // Remove punctuation
+            .replace(/\s+/g, ' ') // Multiple spaces to single
+            .split(' ')
+            .filter(word => word.length > 2 && !stopWords.includes(word))
+            .join(' ')
+
+        return cleaned || query.toLowerCase();
     }
 
     async performVectorSearch(query: string, filter: any, limit: number = 20): Promise<Movie[]> {
@@ -108,7 +123,7 @@ export class MoviesService implements OnModuleInit {
                 filter,
                 with_payload: true,
                 with_vector: false,
-                score_threshold: 0.8, // Add minimum similarity threshold
+                score_threshold: 0.5,
             })
             return result.map(point => this.mapPointToMovie(point));
         } catch (error) {
@@ -128,7 +143,7 @@ export class MoviesService implements OnModuleInit {
         });
 
         const movies = response.points.map(point => this.mapPointToMovie(point));
-        return { movies };
+        return {movies};
     }
 
     private async performFilterSearch(filter: any, limit: number = 20): Promise<{ movies: Movie[] }> {
@@ -140,7 +155,7 @@ export class MoviesService implements OnModuleInit {
         });
 
         const movies = response.points.map(point => this.mapPointToMovie(point));
-        return { movies };
+        return {movies};
     }
 
     private buildTextFilter(searchDto: MovieSearchDto, existingFilter: any): any {
@@ -170,7 +185,7 @@ export class MoviesService implements OnModuleInit {
             });
         }
 
-        return mustConditions.length > 0 ? { must: mustConditions } : undefined;
+        return mustConditions.length > 0 ? {must: mustConditions} : undefined;
     }
 
     async findAll(searchDto: MovieSearchDto): Promise<{ movies: Movie[]; total: number }> {
