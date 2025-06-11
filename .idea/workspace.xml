@@ -7,6 +7,7 @@
     <list default="true" id="167bdefe-d740-4066-804d-94e0c3723261" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/movies/embedding.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/movies/embedding.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/movies/movies.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/movies/movies.controller.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/movies/movies.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/movies/movies.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -114,7 +115,8 @@
       <workItem from="1749315333118" duration="683000" />
       <workItem from="1749359359235" duration="26623000" />
       <workItem from="1749456561064" duration="2398000" />
-      <workItem from="1749465459642" duration="631000" />
+      <workItem from="1749465459642" duration="6527000" />
+      <workItem from="1749646931715" duration="1098000" />
     </task>
     <servers />
   </component>
@@ -256,53 +258,53 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/movies/movies.controller.ts</url>
-          <line>57</line>
+          <line>58</line>
           <option name="timeStamp" value="74" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/movies/movies.controller.ts</url>
-          <line>79</line>
+          <line>80</line>
           <option name="timeStamp" value="75" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/movies/movies.service.ts</url>
-          <line>80</line>
-          <option name="timeStamp" value="156" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/movies/movies.service.ts</url>
-          <line>81</line>
-          <option name="timeStamp" value="157" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/movies/movies.service.ts</url>
           <line>85</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="162" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/movies/movies.service.ts</url>
           <line>90</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="163" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/movies/movies.service.ts</url>
           <line>84</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="164" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/movies/movies.service.ts</url>
           <line>96</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="174" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/movies/movies.service.ts</url>
           <line>97</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="176" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/src/movies/movies.service.ts</url>
+          <line>92</line>
+          <option name="timeStamp" value="177" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/src/movies/movies.service.ts</url>
+          <line>129</line>
+          <option name="timeStamp" value="179" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/src/movies/movies.service.ts</url>
+          <line>130</line>
+          <option name="timeStamp" value="180" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

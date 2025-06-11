@@ -123,11 +123,12 @@ export class MoviesService implements OnModuleInit {
                 filter,
                 with_payload: true,
                 with_vector: false,
-                score_threshold: 0.5,
+                score_threshold: 0.4,
             })
             return result.map(point => this.mapPointToMovie(point));
         } catch (error) {
             this.logger.error('Error performVectorSearch movies:', error);
+            return []
         }
     }
 

@@ -18,6 +18,7 @@ import { MovieSearchDto } from './dto/movie-search.dto';
 export class MoviesController {
     constructor(private readonly moviesService: MoviesService) {}
 
+
     @Get('search')
     @ApiOperation({ summary: 'Search movies with vector similarity and filters' })
     @ApiResponse({

@@ -78,7 +78,7 @@ export class EmbeddingService {
     }
 
     private simpleTextEmbedding(text: string): number[] {
-        const dimension = 384;
+        const dimension = 1024;
         const embedding = new Array(dimension).fill(0);
 
         // Improved approach: use multiple hash functions for better distribution
