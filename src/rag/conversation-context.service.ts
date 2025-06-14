@@ -1,5 +1,18 @@
 import {Injectable} from "@nestjs/common";
 
+
+interface UserPreferences{
+    likedGenres: string[];
+    dislikedGenres: string[];
+    preferredEras: string[];
+    favoriteActors: string[];
+    preferredRating: { min: number; max: number };
+    moodPreferences: Record<string, number>; // mood -> weight
+    languagePreferences: string[];
+    recentInteractions: string[];
+}
+
+
 interface ConversationMemory {
     sessionId: string;
     userPreferences: {

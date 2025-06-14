@@ -4,6 +4,7 @@ WORKDIR /app
 # Copy package files
 
 #include package-lock.json because of the *
+#when update the dependencies of the package the whole code below it will run again
 COPY package*.json ./
 COPY tsconfig*.json ./
 COPY nest-cli*.json ./

@@ -4,6 +4,7 @@ import {COLLECTIONS, VECTOR_DIMENSIONS} from '../database/database.constants';
 import {EmbeddingService} from './embedding.service';
 import {MovieSearchDto} from './dto/movie-search.dto';
 import {Movie} from '../common/interfaces';
+import {GeminiService, QueryIntent} from "../rag/gemini.service";
 
 @Injectable()
 export class MoviesService implements OnModuleInit {
@@ -12,6 +13,7 @@ export class MoviesService implements OnModuleInit {
     constructor(
         private readonly databaseService: DatabaseService,
         private readonly embeddingService: EmbeddingService,
+        private readonly aiService:GeminiService,
     ) {
     }
 
@@ -67,103 +69,170 @@ export class MoviesService implements OnModuleInit {
     }
 
 
+    async searchMoviesWithIntent(searchDto: MovieSearchDto): Promise<{ movies: Movie[]; intent: QueryIntent }> {
+        try {
+            if (!this.databaseService.isReady()) {
+                throw new Error('Database is not ready');
+            }
+
+            // Analyze query intent with Gemini
+            const intent = await this.aiService.analyzeQueryIntent(searchDto.q || '');
+
+            // Choose search strategy based on intent
+            let movies: Movie[];
+
+            // switch (intent.searchStrategy) {
+            //     case 'vector':
+            //         movies = await this.performIntelligentVectorSearch(searchDto, intent);
+            //         break;
+            //     case 'filter':
+            //         movies = await this.performIntelligentFilterSearch(searchDto, intent);
+            //         break;
+            //     case 'hybrid':
+            //         movies = await this.performHybridSearch(searchDto, intent);
+            //         break;
+            //     default:
+            //         movies = await this.performVectorSearch(searchDto.q || '', {}, searchDto.limit || 20);
+            // }
+
+            return { movies, intent };
+
+        } catch (error) {
+            this.logger.error('Error in intelligent search:', error);
+            // Fallback to original search
+            const result = await this.searchMovies(searchDto);
+            return {
+                movies: result.movies,
+                intent: {
+                    type: 'search',
+                    confidence: 0.5,
+                    entities: {},
+                    sentiment: 'neutral',
+                    expandedQuery: searchDto.q || '',
+                    searchStrategy: 'vector'
+                }
+            };
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     // Old way to search for some movie using simple vector search/ filter qdrant ,
     // embed the query to vector then search using vector search
 
-    // async searchMovies(searchDto: MovieSearchDto): Promise<{ movies: Movie[] }> {
-    //     try {
-    //         if (!this.databaseService.isReady()) {
-    //             throw new Error('Database is not ready');
-    //         }
-    //         const collectionExists = await this.databaseService.collectionExists(COLLECTIONS.MOVIES);
-    //         if (!collectionExists) {
-    //             throw new Error(`Collection ${COLLECTIONS.MOVIES} not found`);
-    //         }
-    //
-    //         const filter = this.buildFilter(searchDto);
-    //
-    //         if (searchDto.q) {
-    //             const query = this.preProcessQuery(searchDto.q)
-    //             try {
-    //                 const vectorResults = await this.performVectorSearch(query, filter, searchDto.limit);
-    //                 if (vectorResults.length > 0) {
-    //                     return {movies: vectorResults};
-    //                 }
-    //             } catch (error) {
-    //                 this.logger.warn('Vector search failed, falling back to text search:', error.message);
-    //             }
-    //             return await this.performTextSearch(searchDto, filter);
-    //         } else {
-    //             return await this.performFilterSearch(searchDto.q, filter);
-    //         }
-    //
-    //     } catch (error) {
-    //         this.logger.error('Error searching movies:', error);
-    //         throw error;
-    //     }
-    // }
-    //
-    // private preProcessQuery(query: string): string {
-    //     const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
-    //
-    //     const cleaned = query
-    //         .toLowerCase()
-    //         .trim()
-    //         .replace(/[^\w\s]/g, ' ') // Remove punctuation
-    //         .replace(/\s+/g, ' ') // Multiple spaces to single
-    //         .split(' ')
-    //         .filter(word => word.length > 2 && !stopWords.includes(word))
-    //         .join(' ')
-    //
-    //     return cleaned || query.toLowerCase();
-    // }
-    //
-    // async performVectorSearch(query: string, filter: any, limit: number = 20): Promise<Movie[]> {
-    //     try {
-    //         const searchVector = await this.embeddingService.generateEmbedding(query);
-    //         const result = await this.databaseService.getClient().search(COLLECTIONS.MOVIES, {
-    //             vector: searchVector,
-    //             limit,
-    //             filter,
-    //             with_payload: true,
-    //             with_vector: false,
-    //             score_threshold: 0.4,
-    //         })
-    //         return result.map(point => this.mapPointToMovie(point));
-    //     } catch (error) {
-    //         this.logger.error('Error performVectorSearch movies:', error);
-    //         return []
-    //     }
-    // }
-    //
-    // private async performTextSearch(searchDto: MovieSearchDto, filter: any): Promise<{ movies: Movie[] }> {
-    //     // Enhanced filter for text search
-    //     const textFilter = this.buildTextFilter(searchDto, filter);
-    //
-    //     const response = await this.databaseService.getClient().scroll(COLLECTIONS.MOVIES, {
-    //         limit: searchDto.limit || 20,
-    //         filter: textFilter,
-    //         with_payload: true,
-    //         with_vector: false,
-    //     });
-    //
-    //     const movies = response.points.map(point => this.mapPointToMovie(point));
-    //     return {movies};
-    // }
-    //
-    // private async performFilterSearch(filter: any, limit: number = 20): Promise<{ movies: Movie[] }> {
-    //     const response = await this.databaseService.getClient().scroll(COLLECTIONS.MOVIES, {
-    //         limit,
-    //         filter,
-    //         with_payload: true,
-    //         with_vector: false,
-    //     });
-    //
-    //     const movies = response.points.map(point => this.mapPointToMovie(point));
-    //     return {movies};
-    // }
+    async searchMovies(searchDto: MovieSearchDto): Promise<{ movies: Movie[] }> {
+        try {
+            if (!this.databaseService.isReady()) {
+                throw new Error('Database is not ready');
+            }
+            const collectionExists = await this.databaseService.collectionExists(COLLECTIONS.MOVIES);
+            if (!collectionExists) {
+                throw new Error(`Collection ${COLLECTIONS.MOVIES} not found`);
+            }
+
+            const filter = this.buildFilter(searchDto);
+
+            if (searchDto.q) {
+                const query = this.preProcessQuery(searchDto.q)
+                try {
+                    const vectorResults = await this.performVectorSearch(query, filter, searchDto.limit);
+                    if (vectorResults.length > 0) {
+                        return {movies: vectorResults};
+                    }
+                } catch (error) {
+                    this.logger.warn('Vector search failed, falling back to text search:', error.message);
+                }
+                return await this.performTextSearch(searchDto, filter);
+            } else {
+                return await this.performFilterSearch(searchDto.q, filter);
+            }
+
+        } catch (error) {
+            this.logger.error('Error searching movies:', error);
+            throw error;
+        }
+    }
+
+    private preProcessQuery(query: string): string {
+        const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
+
+        const cleaned = query
+            .toLowerCase()
+            .trim()
+            .replace(/[^\w\s]/g, ' ') // Remove punctuation
+            .replace(/\s+/g, ' ') // Multiple spaces to single
+            .split(' ')
+            .filter(word => word.length > 2 && !stopWords.includes(word))
+            .join(' ')
+
+        return cleaned || query.toLowerCase();
+    }
+
+    async performVectorSearch(query: string, filter: any, limit: number = 20): Promise<Movie[]> {
+        try {
+            const searchVector = await this.embeddingService.generateEmbedding(query);
+            const result = await this.databaseService.getClient().search(COLLECTIONS.MOVIES, {
+                vector: searchVector,
+                limit,
+                filter,
+                with_payload: true,
+                with_vector: false,
+                score_threshold: 0.4,
+            })
+            return result.map(point => this.mapPointToMovie(point));
+        } catch (error) {
+            this.logger.error('Error performVectorSearch movies:', error);
+            return []
+        }
+    }
+
+    private async performTextSearch(searchDto: MovieSearchDto, filter: any): Promise<{ movies: Movie[] }> {
+        // Enhanced filter for text search
+        const textFilter = this.buildTextFilter(searchDto, filter);
+
+        const response = await this.databaseService.getClient().scroll(COLLECTIONS.MOVIES, {
+            limit: searchDto.limit || 20,
+            filter: textFilter,
+            with_payload: true,
+            with_vector: false,
+        });
+
+        const movies = response.points.map(point => this.mapPointToMovie(point));
+        return {movies};
+    }
+
+    private async performFilterSearch(filter: any, limit: number = 20): Promise<{ movies: Movie[] }> {
+        const response = await this.databaseService.getClient().scroll(COLLECTIONS.MOVIES, {
+            limit,
+            filter,
+            with_payload: true,
+            with_vector: false,
+        });
+
+        const movies = response.points.map(point => this.mapPointToMovie(point));
+        return {movies};
+    }
 
     private buildTextFilter(searchDto: MovieSearchDto, existingFilter: any): any {
         const mustConditions = existingFilter?.must || [];

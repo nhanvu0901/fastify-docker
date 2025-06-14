@@ -6,6 +6,7 @@ import { DatabaseModule } from './database/database.module';
 import { SeedersModule } from './seeders/seeders.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import {RAGModule} from "./rag/rag.module";
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { AppService } from './app.service';
         // Feature modules
         UsersModule,
         MoviesModule,
+        RAGModule
     ],
     controllers: [AppController],
     providers: [AppService],

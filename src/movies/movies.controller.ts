@@ -10,17 +10,39 @@ import {
     ApiOperation,
     ApiResponse,
 } from '@nestjs/swagger';
-import { MoviesService } from './movies.service';
-import { MovieSearchDto } from './dto/movie-search.dto';
+import {MoviesService} from './movies.service';
+import {MovieSearchDto} from './dto/movie-search.dto';
 
 @ApiTags('movies')
 @Controller('api/movies')
 export class MoviesController {
-    constructor(private readonly moviesService: MoviesService) {}
+    constructor(private readonly moviesService: MoviesService) {
+    }
 
+
+    @Get('smart-search')
+    @ApiOperation({summary: 'Intelligent search with intent analysis'})
+    async intelligentSearch(@Query() searchDto: MovieSearchDto) {
+        try{
+            const result = await this.moviesService.searchMoviesWithIntent(searchDto);
+            return {
+                movies: result.movies,
+                count: result.movies.length,
+                intent: result.intent,
+                strategy: result.intent.searchStrategy,
+                confidence: result.intent.confidence,
+            };
+        }
+        catch(error){
+            throw new HttpException(
+                'Failed to smart search movies',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
 
     @Get('search')
-    @ApiOperation({ summary: 'Search movies with vector similarity and filters' })
+    @ApiOperation({summary: 'Search movies with vector similarity and filters'})
     @ApiResponse({
         status: 200,
         description: 'Movies retrieved successfully'
@@ -50,7 +72,7 @@ export class MoviesController {
     }
 
     @Get()
-    @ApiOperation({ summary: 'Get all movies with pagination' })
+    @ApiOperation({summary: 'Get all movies with pagination'})
     @ApiResponse({
         status: 200,
         description: 'Movies retrieved successfully'
@@ -72,7 +94,7 @@ export class MoviesController {
     }
 
     @Get('genres')
-    @ApiOperation({ summary: 'Get all available genres' })
+    @ApiOperation({summary: 'Get all available genres'})
     @ApiResponse({
         status: 200,
         description: 'Genres retrieved successfully'
@@ -80,7 +102,7 @@ export class MoviesController {
     async getGenres() {
         try {
             const genres = await this.moviesService.getAllGenres();
-            return { genres };
+            return {genres};
         } catch (error) {
             throw new HttpException(
                 'Failed to fetch genres',
@@ -90,7 +112,7 @@ export class MoviesController {
     }
 
     @Get('stats')
-    @ApiOperation({ summary: 'Get movie database statistics' })
+    @ApiOperation({summary: 'Get movie database statistics'})
     @ApiResponse({
         status: 200,
         description: 'Statistics retrieved successfully'
